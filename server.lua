@@ -201,8 +201,8 @@ end)
 RegisterServerEvent("fd_drugs:callCops")
 AddEventHandler("fd_drugs:callCops", function(coords)
     local chance = math.random()
-    local callInformation = "A suspicious person just asked me if I wanted to buy any drugs"
-    if chance <= 0.35 then
+    local callInformation = "a local. A suspicious person just asked me if I wanted to buy any drugs"
+    if chance <= 0.50 then
         TriggerEvent("DRP_Police:CallHandler", {x = coords.x, y = coords.y , z = coords.z}, callInformation)
         print("Cops Called")
     end

@@ -123,6 +123,90 @@ AddEventHandler("fd_drugs:stockTable", function(drug, table)
         end)
 end)
 
+RegisterServerEvent("fd_drugs:checkInv")
+AddEventHandler("fd_drugs:checkInv",function()
+    local src = source
+    local character = exports["drp_id"]:GetCharacterData(src)
+    local itemCheck = exports["drp_inventory"]:GetItem(character,"b_weed")
+    if itemCheck == nil then
+        TriggerClientEvent("fd_drugs:updateBoolean",src,false)
+        itemCheck = exports["drp_inventory"]:GetItem(character,"b_coke")
+        if itemCheck == nil then
+            TriggerClientEvent("fd_drugs:updateBoolean",src,false)
+        elseif itemCheck >=1 then
+            TriggerClientEvent("fd_drugs:updateBoolean",src,true)
+        end
+    elseif itemCheck >= 1 then
+        TriggerClientEvent("fd_drugs:updateBoolean",src,true)
+    end
+end)
+
+RegisterServerEvent("fd_drugs:sellNPC")
+AddEventHandler("fd_drugs:sellNPC", function()
+    local src = source
+    local character = exports["drp_id"]:GetCharacterData(src)
+    local srcPos = GetEntityCoords(GetPlayerPed(src))
+    local weedCheck = exports["drp_inventory"]:GetItem(character,"b_weed")
+    local cokePrice = math.random(26,34)
+    local weedPrice = math.random(8,12)
+    local chance = math.random()
+    local success
+
+    if chance > 0.5 then
+        success = true
+    else
+        success = false
+    end
+
+    if weedCheck == nil then
+        print("No weed, checking next")
+        local cokeCheck = exports["drp_inventory"]:GetItem(character,"b_coke")
+        if cokeCheck == nil then
+            print("No coke, checking next")
+        else
+            if success then
+                if cokeCheck == 1 then
+                    TriggerEvent("DRP_Inventory:removeInventoryItem","b_coke",1,src)
+                    TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold one baggie of Cocaine"),4500,false,"leftCenter")
+                    TriggerEvent("DRP_Bank:AddCashMoney",character,cokePrice)
+                else
+                    local amount = math.random(1,cokeCheck)
+                    TriggerEvent("DRP_Inventory:removeInventoryItem","b_coke",amount,src)
+                    TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold "..amount.." baggies of Cocaine"),4500,false,"leftCenter")
+                    TriggerEvent("DRP_Bank:AddCashMoney",character,amount*cokePrice)
+                end
+            else
+                TriggerEvent("fd_drugs:callCops",srcPos)
+            end
+        end
+    else
+        if success then
+            if weedCheck == 1 then
+                TriggerEvent("DRP_Inventory:removeInventoryItem","b_weed",1,src)
+                TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold one baggie of Weed"),4500,false,"leftCenter")
+                TriggerEvent("DRP_Bank:AddCashMoney",character,weedPrice)
+            else
+                local amount = math.random(1,weedCheck)
+                TriggerEvent("DRP_Inventory:removeInventoryItem","b_weed",amount,src)
+                TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold "..amount.." baggies of Weed"),4500,false,"leftCenter")
+                TriggerEvent("DRP_Bank:AddCashMoney",character,amount*weedPrice)
+            end
+        else
+            TriggerEvent("fd_drugs:callCops",srcPos)
+        end
+    end
+    
+end)
+
+RegisterServerEvent("fd_drugs:callCops")
+AddEventHandler("fd_drugs:callCops", function(coords)
+    local chance = math.random()
+    local callInformation = "A suspicious person just asked me if I wanted to buy any drugs"
+    if chance <= 0.35 then
+        TriggerEvent("DRP_Police:CallHandler", {x = coords.x, y = coords.y , z = coords.z}, callInformation)
+        print("Cops Called")
+    end
+end)
 
 function dump(o)
     if type(o) == 'table' then

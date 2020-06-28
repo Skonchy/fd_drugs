@@ -1,6 +1,8 @@
 local spawnedDrugTables = {}
 local onDrug = false
 
+local hasDrugs = false
+
 function spawnSellTables()
     local cokeModel = "bkr_prop_coke_table01a"
     local weedModel = "bkr_prop_weed_table_01a"
@@ -101,6 +103,21 @@ AddEventHandler("fd_drugs:showProcessBar", function(drug)
     end
 end)
 
+RegisterNetEvent('animation')
+AddEventHandler('animation', function()
+  local pid = PlayerPedId()
+  RequestAnimDict("amb@prop_human_bum_bin@idle_b")
+  while (not HasAnimDictLoaded("amb@prop_human_bum_bin@idle_b")) do Citizen.Wait(0) end
+    TaskPlayAnim(pid,"amb@prop_human_bum_bin@idle_b","idle_d",100.0, 200.0, 0.3, 120, 0.2, 0, 0, 0)
+    Wait(750)
+    StopAnimTask(pid, "amb@prop_human_bum_bin@idle_b","idle_d", 1.0)
+end)
+
+RegisterNetEvent("fd_drugs:updateBoolean")
+AddEventHandler("fd_drugs:updateBoolean", function(bool)
+    hasDrugs = bool
+end)
+
 Citizen.CreateThread(function()
     print("Invoking deleteSpawnedTables")
     deleteSpawnedTables()
@@ -196,6 +213,49 @@ Citizen.CreateThread(function()
     end
 end)
 
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(0)
+        local player = GetPlayerPed(-1)
+        local playerloc = GetEntityCoords(player)
+        local handle, ped = FindFirstPed()
+        repeat
+          success, ped = FindNextPed(handle)
+          local pos = GetEntityCoords(ped)
+          local distance = GetDistanceBetweenCoords(pos.x, pos.y, pos.z, playerloc.x, playerloc.y, playerloc.z, true)
+          if IsPedInAnyVehicle(GetPlayerPed(-1)) == false then
+            if DoesEntityExist(ped)then
+              if IsPedDeadOrDying(ped) == false then
+                if IsPedInAnyVehicle(ped) == false then
+                  local pedType = GetPedType(ped)
+                  if pedType ~= 28 and IsPedAPlayer(ped) == false then
+                    currentped = pos
+                    if distance <= 2 and ped  ~= GetPlayerPed(-1) and ped ~= oldped then
+                        TriggerServerEvent("fd_drugs:checkInv")
+                      if hasDrugs == true then
+                        drawTxt(0.90, 1.40, 1.0,1.0,0.4, "Press ~b~E ~w~to attempt a drug deal...", 255, 255, 255, 255)
+                        if IsControlJustPressed(1, 86) then
+                            oldped = ped
+                            SetEntityAsMissionEntity(ped)
+                            TaskStandStill(ped, 9.0)
+                            pos1 = GetEntityCoords(ped)
+                            exports["drp_progressBars"]:startUI(2850,"Making the sale")
+                            Citizen.Wait(2850)
+                            TriggerServerEvent('fd_drugs:sellNPC')
+                            SetPedAsNoLongerNeeded(oldped)
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        until not success
+        EndFindPed(handle)
+      end
+end)
+
 function dump(o)
     if type(o) == 'table' then
        local s = '{ '
@@ -220,3 +280,19 @@ function dump(o)
         return -1
     end
  end
+ 
+function drawTxt(x,y,width,height,scale,text,r,g,b,a,outline)
+    SetTextFont(0)
+    SetTextProportional(0)
+    SetTextScale(scale, scale)
+    SetTextColour(r, g, b, a)
+    SetTextDropShadow(0, 0, 0, 0,255)
+    SetTextEdge(1, 0, 0, 0, 255)
+    SetTextDropShadow()
+    if(outline)then
+      SetTextOutline()
+    end
+    SetTextEntry("STRING")
+    AddTextComponentString(text)
+    DrawText(x - width/2, y - height/2 + 0.005)
+end

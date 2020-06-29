@@ -56,17 +56,19 @@ AddEventHandler("fd_drugs:process", function(item)
         local itemCheck = exports["drp_inventory"]:GetItem(character,"u_weed")
         if itemCheck == nil then
             TriggerClientEvent("DRP_Core:Error",src,"Drugs",tostring("You don't have any unprocessed weed."),4500,false,"leftCenter")
-        elseif itemCheck >= 10 then
+        elseif itemCheck >= 100 then
             TriggerEvent("DRP_Inventory:removeInventoryItem","u_weed",100,src)
             TriggerClientEvent("fd_drugs:showProcessBar",src,"weed")
+            TriggerClientEvent("fd_drugs:toggleBusy",src,true)
             Citizen.Wait(10000)
             TriggerEvent("DRP_Inventory:addInventoryItem","k_weed",1,src)
+            TriggerClientEvent("fd_drugs:toggleBusy",src,false)
         end
     elseif item == "coke" then
         local itemCheck = exports["drp_inventory"]:GetItem(character,"u_coke")
         if itemCheck == nil then
             TriggerClientEvent("DRP_Core:Error",src,"Drugs",tostring("You don't have any unprocessed cocaine."),4500,false,"leftCenter")
-        elseif itemCheck >= 10 then
+        elseif itemCheck >= 100 then
             TriggerEvent("DRP_Inventory:removeInventoryItem","u_coke",100,src)
             TriggerClientEvent("fd_drugs:showProcessBar",src,"coke")
             Citizen.Wait(10000)
@@ -170,7 +172,10 @@ AddEventHandler("fd_drugs:sellNPC", function()
                     TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold one baggie of Cocaine"),4500,false,"leftCenter")
                     TriggerEvent("DRP_Bank:AddCashMoney",character,cokePrice)
                 else
-                    local amount = math.random(1,cokeCheck)
+                    local amount = math.random(1,cokeCheck)%14
+                    if amount == 0 then
+                        amount = 1
+                    end
                     TriggerEvent("DRP_Inventory:removeInventoryItem","b_coke",amount,src)
                     TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold "..amount.." baggies of Cocaine"),4500,false,"leftCenter")
                     TriggerEvent("DRP_Bank:AddCashMoney",character,amount*cokePrice)
@@ -186,7 +191,10 @@ AddEventHandler("fd_drugs:sellNPC", function()
                 TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold one baggie of Weed"),4500,false,"leftCenter")
                 TriggerEvent("DRP_Bank:AddCashMoney",character,weedPrice)
             else
-                local amount = math.random(1,weedCheck)
+                local amount = math.random(1,weedCheck)%14
+                if amount == 0 then
+                    amount = 1
+                end
                 TriggerEvent("DRP_Inventory:removeInventoryItem","b_weed",amount,src)
                 TriggerClientEvent("DRP_Core:Info",src,"Drugs",tostring("You sold "..amount.." baggies of Weed"),4500,false,"leftCenter")
                 TriggerEvent("DRP_Bank:AddCashMoney",character,amount*weedPrice)

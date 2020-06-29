@@ -1,6 +1,6 @@
 local spawnedDrugTables = {}
 local onDrug = false
-
+local busy = false
 local hasDrugs = false
 
 function spawnSellTables()
@@ -96,11 +96,16 @@ end)
 
 RegisterNetEvent("fd_drugs:showProcessBar")
 AddEventHandler("fd_drugs:showProcessBar", function(drug)
-    if drug == "weed" then
+    if drug == "weed" and not busy then
         exports["drp_progressBars"]:startUI(10000,"Processing Weed")
     elseif drug == "coke" then 
         exports["drp_progressBars"]:startUI(10000,"Processing Coke")
     end
+end)
+
+RegisterNetEvent("fd_drugs:toggleBusy")
+AddEventHandler("fd_drugs:toggleBusy", function(bool)
+    busy = bool
 end)
 
 RegisterNetEvent('animation')
@@ -169,18 +174,22 @@ Citizen.CreateThread(function()
         if wDist <= 5.0 then
             sleep = 5
             exports["drp_core"]:DrawText3Ds(wPos.x,wPos.y,wPos.z,tostring("Press ~b~[E]~w~ to pick some weed"))
-            if IsControlJustPressed(1,86) then
+            if IsControlJustPressed(1,86) and not busy then
                 exports["drp_progressBars"]:startUI(5000,"Gathering Weed") -- Display a progress bar
+                busy = true
                 Citizen.Wait(5000)
                 TriggerServerEvent("fd_drugs:gather","weed")
+                busy = false
             end
         elseif cDist <= 5.0 then
             sleep = 5
             exports["drp_core"]:DrawText3Ds(cPos.x,cPos.y,cPos.z,tostring("Press ~b~[E]~w~ to pick some coca leaves"))
-            if IsControlJustPressed(1,86) then
+            if IsControlJustPressed(1,86) and not busy then
                 exports["drp_progressBars"]:startUI(5000,"Gathering Coca Leaves")-- Display a progress bar
+                busy = true
                 Citizen.Wait(5000)
                 TriggerServerEvent("fd_drugs:gather","coke")
+                busy = false
             end
         end
         Citizen.Wait(sleep)
@@ -199,13 +208,13 @@ Citizen.CreateThread(function()
         if wDist <= 5.0 then
             sleep = 5
             exports["drp_core"]:DrawText3Ds(wPos.x,wPos.y,wPos.z,tostring("Press ~b~[E]~w~ to process weed"))
-            if IsControlJustPressed(1,86) then
+            if IsControlJustPressed(1,86) and not busy then
                 TriggerServerEvent("fd_drugs:process","weed")
             end
         elseif cDist <= 5.0 then
             sleep = 5
             exports["drp_core"]:DrawText3Ds(cPos.x,cPos.y,cPos.z,tostring("Press ~b~[E]~w~ to process coke"))
-            if IsControlJustPressed(1,86) then
+            if IsControlJustPressed(1,86) and not busy then
                 TriggerServerEvent("fd_drugs:process","coke")
             end
         end
@@ -234,7 +243,8 @@ Citizen.CreateThread(function()
                         TriggerServerEvent("fd_drugs:checkInv")
                       if hasDrugs == true then
                         drawTxt(0.90, 1.40, 1.0,1.0,0.4, "Press ~b~E ~w~to attempt a drug deal...", 255, 255, 255, 255)
-                        if IsControlJustPressed(1, 86) then
+                        if IsControlJustPressed(1, 86) and not busy then
+                            busy = true
                             oldped = ped
                             SetEntityAsMissionEntity(ped)
                             TaskStandStill(ped, 9.0)
@@ -243,6 +253,7 @@ Citizen.CreateThread(function()
                             Citizen.Wait(2850)
                             TriggerServerEvent('fd_drugs:sellNPC')
                             SetPedAsNoLongerNeeded(oldped)
+                            busy = false
                         end
                       end
                     end
